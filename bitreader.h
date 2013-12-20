@@ -24,18 +24,30 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLANETS_H__
-#define __PLANETS_H__
+#ifndef __BITREADER_H__
+#define __BITREADER_H__
 
 #include <QString>
-#include <QList>
-class BitReader;
 
-class Planets {
+class BitReader
+{
 public:
-	void load(const QString &path);
+	BitReader(const char *data,size_t len);
+	bool rb();
+	quint8 r8();
+	quint16 r16();
+	quint32 r32();
+	quint64 r64();
+	float rf();
+	double rd();
+	quint32 rv();
+	QString rs();
+	void skip(size_t len);
+	QByteArray read(size_t len);
 private:
-	QList<QString> planets;
+	const quint8 *data;
+	const quint8 *ptr;
+	const quint8 *end;
 };
 
 #endif

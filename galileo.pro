@@ -10,8 +10,8 @@ win32:RC_FILE += winicon.rc
 macx:ICON = icon.icns
 
 # Input
-HEADERS += zlib.h zconf.h galileo.h mapview.h steam.h assets.h players.h planets.h json.h
-SOURCES += main.cpp galileo.cpp mapview.cpp steam.cpp assets.cpp players.cpp planets.cpp json.cpp
+HEADERS += zlib.h zconf.h galileo.h mapview.h steam.h assets.h players.h planets.h json.h sbv.h bitreader.h worldcoordinate.h coordinate.h
+SOURCES += main.cpp galileo.cpp mapview.cpp steam.cpp assets.cpp players.cpp planets.cpp json.cpp sbv.cpp bitreader.cpp worldcoordinate.cpp coordinate.cpp
 
 unix {
 desktop.path = /usr/share/applications

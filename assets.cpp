@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class Material {
 public:
-	Material(QDir &dir,JSON &json);
+	Material(const QDir &dir,const QString path);
 	~Material();
 	int id;
 	QString description;
@@ -43,7 +43,7 @@ public:
 };
 class Mod {
 public:
-	Mod(QDir &dir,JSON &json);
+	Mod(const QDir &dir,const QString path);
 	~Mod();
 	int id;
 	QString description;
@@ -85,7 +85,10 @@ void Assets::load(const QString &path)
 		{
 			it.next();
 			if (it.fileInfo().suffix()=="material")
-				parseMaterial(assets,it.filePath());
+			{
+				Material *m=new Material(assets,it.filePath());
+				materials[m->id]=m;
+			}
 		}
 		assets.cdUp();
 	}
@@ -96,7 +99,10 @@ void Assets::load(const QString &path)
 		{
 			it.next();
 			if (it.fileInfo().suffix()=="material")
-				parseMaterial(assets,it.filePath());
+			{
+				Material *m=new Material(assets,it.filePath());
+				materials[m->id]=m;
+			}
 		}
 		assets.cdUp();
 	}
@@ -107,27 +113,18 @@ void Assets::load(const QString &path)
 		{
 			it.next();
 			if (it.fileInfo().suffix()=="matmod")
-				parseMod(assets,it.filePath());
+			{
+				Mod *m=new Mod(assets,it.filePath());
+				mods[m->id]=m;
+			}
 		}
 		assets.cdUp();
 	}
 }
 
-void Assets::parseMaterial(QDir &dir,QString fn)
+Material::Material(const QDir &dir,const QString path)
 {
-	JSON json(fn);
-	Material *m=new Material(dir,json);
-	materials[m->id]=m;
-}
-void Assets::parseMod(QDir &dir,QString fn)
-{
-	JSON json(fn);
-	Mod *m=new Mod(dir,json);
-	mods[m->id]=m;
-}
-
-Material::Material(QDir &dir,JSON &json)
-{
+	JSON json(path);
 	id=json["materialId"].toNumber();
 	description=json["shortdescription"].toString();
 	multicolored=json["multicolored"].toBoolean();
@@ -152,8 +149,9 @@ Material::~Material()
 	if (stairs)
 		delete stairs;
 }
-Mod::Mod(QDir &dir,JSON &json)
+Mod::Mod(const QDir &dir,const QString path)
 {
+	JSON json(path);
 	id=json["modId"].toNumber();
 	description=json["Description"].toString();
 	variants=json["variants"].toNumber();

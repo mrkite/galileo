@@ -24,18 +24,26 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLANETS_H__
-#define __PLANETS_H__
+#include "worldcoordinate.h"
+#include "bitreader.h"
+#include "coordinate.h"
 
-#include <QString>
-#include <QList>
-class BitReader;
-
-class Planets {
-public:
-	void load(const QString &path);
-private:
-	QList<QString> planets;
-};
-
-#endif
+WorldCoordinate::WorldCoordinate(BitReader &bits)
+{
+	coordinate=new Coordinate(bits);
+	planet=bits.r32();
+	moon=bits.r32();
+	filename=QString("%1_%2_%3_%4_%5")
+		.arg(coordinate->sector)
+		.arg(coordinate->x)
+		.arg(coordinate->y)
+		.arg(coordinate->z)
+		.arg(planet);
+	if (moon)
+		filename+=QString("_%1").arg(moon);
+	filename+=".world";
+}
+WorldCoordinate::~WorldCoordinate()
+{
+	delete coordinate;
+}

@@ -23,3 +23,133 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#include "players.h"
+#include "bitreader.h"
+#include "worldcoordinate.h"
+#include <QDir>
+#include <QDirIterator>
+#include <QDebug>
+
+class ClientContext : SBV
+{
+public:
+	ClientContext(const QString fn);
+	QString home,current;
+};
+
+Players::~Players()
+{
+	QListIterator<Player *>i(players);
+	while (i.hasNext())
+		delete i.next();
+}
+
+void Players::load(const QString &path)
+{
+	//search for player folder
+	QDir dir(path);
+	bool found=false;
+	if (dir.cd("player"))
+		found=true;
+	else
+	{
+		if (dir.cd("linux32"))
+		{
+			if (dir.cd("player"))
+				found=true;
+			else
+				dir.cdUp();
+		}
+		if (!found && dir.cd("linux64"))
+		{
+			if (dir.cd("player"))
+				found=true;
+			else
+				dir.cdUp();
+		}
+		if (!found && dir.cd("win32"))
+		{
+			if (dir.cd("player"))
+				found=true;
+			else
+				dir.cdUp();
+		}
+	}
+	if (!found)
+		return;
+	//loop through all the players
+	QDirIterator it(dir);
+	while (it.hasNext())
+	{
+		it.next();
+		if (it.fileInfo().suffix()=="player")
+		{
+			Player *p=new Player(it.filePath());
+			p->ship=dir.filePath(p->uuid+".shipword");
+			players.append(p);
+		}
+	}
+	//now loop through all the client contexts
+	dir.cdUp();
+	if (dir.cd("universe"))
+	{
+		QListIterator<Player *>i(players);
+		while (i.hasNext())
+		{
+			Player *p=i.next();
+			ClientContext cc(dir.filePath(p->uuid+".clientcontext"));
+			p->home=cc.home;
+			p->current=cc.current;
+		}
+	}
+}
+
+Player::Player(const QString fn) : SBV("SBPFV1.1",fn)
+{
+	BitReader bits(data.constData(),data.size());
+	bool hasUUID=bits.rb();
+	if (hasUUID)
+	{
+		for (int i=0;i<16;i++)
+			uuid+=QString("%1").arg(bits.r8(),2,16,QChar('0'));
+	}
+	name=bits.rs();
+	//we don't care about the rest of the identity
+}
+
+ClientContext::ClientContext(const QString fn) : SBV("SBCCV1",fn)
+{
+	BitReader bits(data.constData(),data.size());
+	bits.rb(); //isAdmin
+	bits.rv(); //teamType
+	bits.rv(); //team
+	bits.rv(); //len of rest of context
+	quint32 numBookmarks=bits.rv();
+	for (quint32 i=0;i<numBookmarks;i++)
+	{
+		bits.rs(); //sector
+		bits.r32(); //x
+		bits.r32(); //y
+		bits.r32(); //z
+		bits.rs(); //name
+	}
+	quint32 numSectors=bits.rv();
+	for (quint32 i=0;i<numSectors;i++)
+	{
+		bits.rs(); //name
+		bits.rb(); //charted
+	}
+	quint32 numSystems=bits.rv();
+	for (quint32 i=0;i<numSystems;i++)
+	{
+		bits.rs(); //sector
+		bits.r32(); //x
+		bits.r32(); //y
+		bits.r32(); //z
+	}
+	WorldCoordinate c(bits);
+	current=c.filename;
+	WorldCoordinate h(bits);
+	home=h.filename;
+}

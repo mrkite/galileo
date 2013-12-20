@@ -24,18 +24,21 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLANETS_H__
-#define __PLANETS_H__
+#ifndef __WORLDCOORDINATE_H__
+#define __WORLDCOORDINATE_H__
 
 #include <QString>
-#include <QList>
 class BitReader;
+class Coordinate;
 
-class Planets {
+class WorldCoordinate
+{
 public:
-	void load(const QString &path);
-private:
-	QList<QString> planets;
+	WorldCoordinate(BitReader &bits);
+	~WorldCoordinate();
+	Coordinate *coordinate;
+	qint32 planet,moon;
+	QString filename;
 };
 
 #endif

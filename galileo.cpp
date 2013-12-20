@@ -56,6 +56,7 @@ Galileo::Galileo(QString sbpath) : sbpath(sbpath)
 	emit worldLoaded(false);
 
 	assets.load(sbpath);
+	players.load(sbpath);
 }
 
 void Galileo::createActions()

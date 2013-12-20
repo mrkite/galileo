@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QtWidgets/QMainWindow>
 #include "assets.h"
+#include "players.h"
+#include "planets.h"
 
 class QAction;
 class QMenu;
@@ -59,6 +61,8 @@ private:
 
 	MapView *mapview;
 	Assets assets;
+	Players players;
+	Planets planets;
 	QString sbpath;
 };
 

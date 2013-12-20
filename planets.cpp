@@ -23,3 +23,50 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#include "planets.h"
+#include "bitreader.h"
+#include <QDir>
+#include <QDirIterator>
+
+void Planets::load(const QString &path)
+{
+	//search for universe folder
+	QDir dir(path);
+	bool found=false;
+	if (dir.cd("universe"))
+		found=true;
+	if (!found && dir.cd("linux32"))
+	{
+		if (dir.cd("universe"))
+			found=true;
+		else
+			dir.cdUp();
+	}
+	if (!found && dir.cd("linux64"))
+	{
+		if (dir.cd("universe"))
+			found=true;
+		else
+			dir.cdUp();
+	}
+	if (!found && dir.cd("win32"))
+	{
+		if (dir.cd("universe"))
+			found=true;
+		else
+			dir.cdUp();
+	}
+
+	if (!found)
+		return;
+
+	//loop through all worlds
+	QDirIterator it(dir);
+	while (it.hasNext())
+	{
+		it.next();
+		if (it.fileInfo().suffix()=="world")
+			planets.append(it.filePath());
+	}
+}

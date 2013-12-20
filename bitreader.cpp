@@ -24,18 +24,90 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLANETS_H__
-#define __PLANETS_H__
+#include "bitreader.h"
 
-#include <QString>
-#include <QList>
-class BitReader;
+BitReader::BitReader(const char *data,size_t len)
+{
+	this->data=(const quint8 *)data;
+	this->ptr=this->data;
+	this->end=this->ptr+len;
+}
 
-class Planets {
-public:
-	void load(const QString &path);
-private:
-	QList<QString> planets;
-};
+bool BitReader::rb()
+{
+	return *ptr++;
+}
 
-#endif
+quint8 BitReader::r8()
+{
+	return *ptr++;
+}
+quint16 BitReader::r16()
+{
+	quint16 r=(ptr[0]<<16)|ptr[1];
+	ptr+=2;
+	return r;
+}
+quint32 BitReader::r32()
+{
+	quint32 r=(ptr[0]<<24)|(ptr[1]<<16)|(ptr[2]<<8)|ptr[3];
+	ptr+=4;
+	return r;
+}
+quint64 BitReader::r64()
+{
+	quint64 r=0;
+	for (int i=0;i<8;i++)
+	{
+		r<<=8;
+		r|=ptr[i];
+	}
+	ptr+=8;
+	return r;
+}
+quint32 BitReader::rv()
+{
+	quint32 r=0;
+	quint8 b;
+	do {
+		r<<=7;
+		b=*ptr++;
+		r|=b&0x7f;
+	} while (b&0x80);
+	return r;
+}
+float BitReader::rf()
+{
+	union {
+		quint32 d;
+		float f;
+	} df;
+	df.d=r32();
+	return df.f;
+}
+double BitReader::rd()
+{
+	union {
+		quint64 d;
+		double f;
+	} df;
+	df.d=r64();
+	return df.d;
+}
+QString BitReader::rs()
+{
+	quint32 len=rv();
+	QByteArray r((const char *)ptr,len);
+	ptr+=len;
+	return r;
+}
+void BitReader::skip(size_t len)
+{
+	ptr+=len;
+}
+QByteArray BitReader::read(size_t len)
+{
+	QByteArray r((const char *)ptr,len);
+	ptr+=len;
+	return r;
+}

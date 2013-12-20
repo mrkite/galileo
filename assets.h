@@ -39,10 +39,6 @@ public:
 	static bool verify(const QString &path);
 	void load(const QString &path);
 private:
-
-	void parseMaterial(QDir &dir,QString fn);
-	void parseMod(QDir &dir,QString fn);
-
 	QHash<int,Material *> materials;
 	QHash<int,Mod *> mods;
 };

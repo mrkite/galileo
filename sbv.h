@@ -24,18 +24,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLANETS_H__
-#define __PLANETS_H__
+#ifndef __SBV_H__
+#define __SBV_H__
 
 #include <QString>
-#include <QList>
-class BitReader;
 
-class Planets {
+class SBVParseException
+{
 public:
-	void load(const QString &path);
-private:
-	QList<QString> planets;
+	SBVParseException(QString reason) : reason(reason) {}
+	QString reason;
+};
+
+class SBV
+{
+public:
+	SBV(const char *magic,const QString filename);
+protected:
+	QByteArray data;
+	quint32 version;
 };
 
 #endif

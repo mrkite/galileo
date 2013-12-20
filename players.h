@@ -27,7 +27,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __PLAYERS_H__
 #define __PLAYERS_H__
 
+#include "sbv.h"
+#include <QList>
+#include <QString>
+class QDir;
+
+class Player : SBV {
+public:
+	Player(const QString fn);
+	QString uuid;
+	QString name;
+	QString ship,home,current;
+};
+
 class Players {
+public:
+	~Players();
+	void load(const QString &path);
+private:
+
+	QList<Player *> players;
 };
 
 #endif
