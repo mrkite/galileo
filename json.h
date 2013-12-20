@@ -29,66 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QHash>
 #include <QList>
-
-class JSONHelper;
-
-class JSONData
-{
-public:
-	virtual ~JSONData() {};
-	virtual bool has(const QString key);
-	virtual JSONData *at(const QString key);
-	virtual JSONData *at(int index);
-	virtual int length();
-	virtual QString asString();
-	virtual double asNumber();
-	virtual bool asBool();
-};
-
-class JSONBool : public JSONData
-{
-public:
-	JSONBool(bool val);
-	bool asBool();
-private:
-	bool data;
-};
-class JSONString : public JSONData
-{
-public:
-	JSONString(QString val);
-	QString asString();
-private:
-	QString data;
-};
-class JSONNumber : public JSONData
-{
-public:
-	JSONNumber(double val);
-	double asNumber();
-private:
-	double data;
-};
-class JSONObject : public JSONData
-{
-public:
-	JSONObject(JSONHelper &);
-	~JSONObject();
-	bool has(const QString key);
-	JSONData *at(const QString key);
-private:
-	QHash<QString,JSONData *>children;
-};
-class JSONArray : public JSONData
-{
-public:
-	JSONArray(JSONHelper &);
-	~JSONArray();
-	JSONData *at(int index);
-	int length();
-private:
-	QList<JSONData *>data;
-};
+#include <QString>
 
 class JSONParseException
 {
@@ -100,7 +41,19 @@ public:
 class JSON
 {
 public:
-	static JSONData *parse(const QString data);
+	JSON();
+	JSON(const QString filename);
+	virtual ~JSON();
+	virtual bool isNull() const;
+	virtual bool contains(const QString key) const;
+	virtual const JSON &operator[](const QString key) const;
+	virtual const JSON &operator[](int index) const;
+	virtual int length() const;
+	virtual const QString toString() const;
+	virtual double toNumber() const;
+	virtual bool toBoolean() const;
+private:
+	JSON *root;
 };
 
 #endif

@@ -10,12 +10,16 @@ win32:RC_FILE += winicon.rc
 macx:ICON = icon.icns
 
 # Input
-HEADERS += zlib.h zconf.h galileo.h mapview.h steam.h assets.h players.h planets.h
-SOURCES += main.cpp galileo.cpp mapview.cpp steam.cpp assets.cpp players.cpp planets.cpp
+HEADERS += zlib.h zconf.h galileo.h mapview.h steam.h assets.h players.h planets.h json.h
+SOURCES += main.cpp galileo.cpp mapview.cpp steam.cpp assets.cpp players.cpp planets.cpp json.cpp
 
-desktopfile.path = /usr/share/applications
-desktopfile.files = galileo.desktop
-pixmapfile.path = /usr/share/pixmaps
-pixmapfile.files = galileo.png galileo.xpm
+unix {
+desktop.path = /usr/share/applications
+desktop.files = galileo.desktop
+icon48.path = /usr/share/icons/hicolor/16x16/apps
+icon48.files = icons/48x48/galileo.png
+icon256.path = /usr/share/icons/hicolor/256x256/apps
+icon256.files = icons/256x256/galileo.png
 target.path = /usr/bin
-INSTALLS += desktopfile pixmapfile target
+INSTALLS += desktop icon48 icon256 target
+}

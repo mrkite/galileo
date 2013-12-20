@@ -25,12 +25,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "assets.h"
+#include "json.h"
 #include <QDir>
 #include <QDirIterator>
+#include <QDebug>
+#include <QPixmap>
 
 class Material {
+public:
+	Material(QDir &dir,JSON &json);
+	~Material();
+	int id;
+	QString description;
+	bool platform,multicolored;
+	int variants,stairVariants;
+	QPixmap *pixmap,*stairs;
 };
 class Mod {
+public:
+	Mod(QDir &dir,JSON &json);
+	~Mod();
+	int id;
+	QString description;
+	int variants; 
+	QPixmap *pixmap;
 };
 
 Assets::~Assets()
@@ -106,4 +124,42 @@ void Assets::parseMod(QDir &dir,QString fn)
 	JSON json(fn);
 	Mod *m=new Mod(dir,json);
 	mods[m->id]=m;
+}
+
+Material::Material(QDir &dir,JSON &json)
+{
+	id=json["materialId"].toNumber();
+	description=json["shortdescription"].toString();
+	multicolored=json["multicolored"].toBoolean();
+	platform=json["platform"].toBoolean();
+	if (platform)
+	{
+		pixmap=new QPixmap(dir.filePath(json["platformImage"].toString()));
+		variants=json["platformVariants"].toNumber();
+		stairs=new QPixmap(dir.filePath(json["stairImage"].toString()));
+		stairVariants=json["stairVariants"].toNumber();
+	}
+	else
+	{
+		pixmap=new QPixmap(dir.filePath(json["frames"].toString()));
+		variants=json["variants"].toNumber();
+		stairs=NULL;
+	}
+}
+Material::~Material()
+{
+	delete pixmap;
+	if (stairs)
+		delete stairs;
+}
+Mod::Mod(QDir &dir,JSON &json)
+{
+	id=json["modId"].toNumber();
+	description=json["Description"].toString();
+	variants=json["variants"].toNumber();
+	pixmap=new QPixmap(dir.filePath(json["frames"].toString()));
+}
+Mod::~Mod()
+{
+	delete pixmap;
 }

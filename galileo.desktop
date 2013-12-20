@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Galileo
+Name[en_US]=Galileo
+GenericName=Starbound Mapping Tool
+Exec=galileo
+Icon=galileo
+Terminal=false
+Categories=Utility;Amusement;

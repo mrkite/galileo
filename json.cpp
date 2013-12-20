@@ -45,6 +45,13 @@ class JSONHelper
 {
 public:
 	JSONHelper(QString data) : data(data) { pos=0;len=data.length();}
+	Token peekToken()
+	{
+		int oldpos=pos;
+		Token t=nextToken();
+		pos=oldpos;
+		return t;
+	}
 	Token nextToken()
 	{
 		while (pos<len && data.at(pos).isSpace()) pos++;
@@ -207,169 +214,209 @@ private:
 	QString data;
 };
 
-JSONData *JSON::parse(const QString data)
+class JSONNull : public JSON {
+public:
+	virtual bool isNull() const { return true; }
+};
+class JSONBool : public JSON {
+public:
+	JSONBool(bool b) : data(b) {}
+	virtual bool toBoolean() const { return data; }
+private:
+	bool data;
+};
+class JSONString : public JSON {
+public:
+	JSONString(const QString s) : data(s) {}
+	virtual const QString toString() const { return data; }
+private:
+	const QString data;
+};
+class JSONNumber : public JSON {
+public:
+	JSONNumber(double d) : data(d) {}
+	virtual double toNumber() const { return data; }
+private:
+	double data;
+};
+class JSONObject : public JSON {
+public:
+	JSONObject(JSONHelper &reader);
+	virtual ~JSONObject();
+	virtual bool contains(const QString key) const;
+	virtual const JSON &operator[](const QString key) const;
+private:
+	QHash<QString,JSON *> children;
+};
+class JSONArray : public JSON {
+public:
+	JSONArray(JSONHelper &reader);
+	virtual ~JSONArray();
+	virtual int length() const;
+	virtual const JSON &operator[](int index) const;
+private:
+	QList<JSON *> children;
+};
+static JSONNull Null;
+
+static JSON *parse(JSONHelper &reader)
 {
-	JSONHelper reader(data);
-	Token type=reader.nextToken();
-	switch (type)
+	Token token=reader.nextToken();
+	switch (token)
 	{
-	case TokenObject:
-		return new JSONObject(reader);
-	case TokenArray:
-		return new JSONArray(reader);
-	default:
-		throw JSONParseException("Doesn't start with object or array",reader.location());
-		break;
+		case TokenNULL: return new JSONNull();
+		case TokenTRUE: return new JSONBool(true);
+		case TokenFALSE: return new JSONBool(false);
+		case TokenString: return new JSONString(reader.readString());
+		case TokenNumber: return new JSONNumber(reader.readDouble());
+		case TokenObject: return new JSONObject(reader);
+		case TokenArray: return new JSONArray(reader);
+		default: throw JSONParseException("Expected value",reader.location());
 	}
 	return NULL;
 }
-static JSONData Null;
-bool JSONData::has(const QString)
-{
-	return false;
-}
-JSONData *JSONData::at(const QString)
-{
-	return &Null;
-}
-JSONData *JSONData::at(int)
-{
-	return &Null;
-}
-int JSONData::length()
-{
-	return 0;
-}
-QString JSONData::asString()
-{
-	return NULL;
-}
-double JSONData::asNumber()
-{
-	return 0.0;
-}
-bool JSONData::asBool()
-{
-	return false;
-}
-JSONBool::JSONBool(bool val)
-{
-	data=val;
-}
-bool JSONBool::asBool()
-{
-	return data;
-}
-JSONString::JSONString(QString val)
-{
-	data=val;
-}
-QString JSONString::asString()
-{
-	return data;
-}
-JSONNumber::JSONNumber(double val)
-{
-	data=val;
-}
-double JSONNumber::asNumber()
-{
-	return data;
-}
+
 JSONObject::JSONObject(JSONHelper &reader)
 {
 	while (true)
 	{
-		Token type=reader.nextToken();
-		if (type==TokenObjectClose)
+		Token token=reader.nextToken();
+		if (token==TokenObjectClose)
 			break;
-		if (type!=TokenString)
+		if (token!=TokenString)
 			throw JSONParseException("Expected quoted string",reader.location());
 		QString key=reader.readString();
-		if (key.length()==0) throw JSONParseException("Empty object key",reader.location());
-		if (reader.nextToken()!=TokenKeySeparator) throw JSONParseException("Expected ':'",reader.location());
-		JSONData *value;
-		switch (reader.nextToken())
-		{
-		case TokenNULL: value=NULL; break;
-		case TokenTRUE: value=new JSONBool(true); break;
-		case TokenFALSE: value=new JSONBool(false); break;
-		case TokenString: value=new JSONString(reader.readString()); break;
-		case TokenNumber: value=new JSONNumber(reader.readDouble()); break;
-		case TokenObject: value=new JSONObject(reader); break;
-		case TokenArray: value=new JSONArray(reader); break;
-		default: throw JSONParseException("Expected value",reader.location());
-		}
-		children[key]=value;
-		type=reader.nextToken(); //comma or end
-		if (type==TokenObjectClose)
+		if (key.length()==0)
+			throw JSONParseException("Empty key",reader.location());
+		if (reader.nextToken()!=TokenKeySeparator)
+			throw JSONParseException("Expected ':'",reader.location());
+		children.insert(key,parse(reader));
+		token=reader.nextToken();
+		if (token==TokenObjectClose)
 			break;
-		if (type!=TokenValueSeparator)
+		if (token!=TokenValueSeparator)
 			throw JSONParseException("Expected ',' or '}'",reader.location());
 	}
 }
 JSONObject::~JSONObject()
 {
-	QHashIterator<QString, JSONData*>i(children);
+	QHashIterator<QString,JSON*>i(children);
 	while (i.hasNext())
 	{
 		i.next();
 		delete i.value();
 	}
 }
-bool JSONObject::has(QString key)
+bool JSONObject::contains(const QString key) const
 {
 	return children.contains(key);
 }
-JSONData *JSONObject::at(QString key)
+const JSON &JSONObject::operator[](const QString key) const
 {
 	if (children.contains(key))
-		return children[key];
-	return &Null;
+		return *children[key];
+	return Null;
 }
+
 JSONArray::JSONArray(JSONHelper &reader)
 {
+	Token token=reader.peekToken();
+	if (token==TokenArrayClose)
+	{
+		reader.nextToken();
+		return;
+	}
 	while (true)
 	{
-		Token type=reader.nextToken();
-		if (type==TokenArrayClose)
+		children.append(parse(reader));
+		token=reader.nextToken();
+		if (token==TokenArrayClose)
 			break;
-		JSONData *value;
-		switch (type)
-		{
-		case TokenNULL: value=NULL; break;
-		case TokenTRUE: value=new JSONBool(true); break;
-		case TokenFALSE: value=new JSONBool(false); break;
-		case TokenString: value=new JSONString(reader.readString()); break;
-		case TokenNumber: value=new JSONNumber(reader.readDouble()); break;
-		case TokenObject: value=new JSONObject(reader); break;
-		case TokenArray: value=new JSONArray(reader); break;
-		default: throw JSONParseException("Expected Value", reader.location());
-		}
-		data.append(value);
-		type=reader.nextToken(); //comma or end
-		if (type==TokenArrayClose)
-			break;
-		if (type!=TokenValueSeparator)
+		if (token!=TokenValueSeparator)
 			throw JSONParseException("Expected ',' or ']'",reader.location());
 	}
 }
 JSONArray::~JSONArray()
 {
-	QListIterator<JSONData *>i(data);
+	QListIterator<JSON *>i(children);
 	while (i.hasNext())
-	{
-		i.next();
-		delete i.value();
-	}
+		delete i.next();
 }
-int JSONArray::length()
+int JSONArray::length() const
 {
-	return data.length();
+	return children.length();
 }
-JSONData *JSONArray::at(int index)
+const JSON &JSONArray::operator[](int index) const
 {
-	if (index<data.length())
-		return data[index];
-	return &Null;
+	if (index<children.length())
+		return *children[index];
+	return Null;
+}
+
+
+JSON::JSON(const QString filename)
+{
+	root=NULL;
+	QFile f(filename);
+	f.open(QIODevice::ReadOnly);
+	JSONHelper reader(f.readAll());
+	f.close();
+	root=parse(reader);
+}
+JSON::JSON()
+{
+	root=NULL;
+}
+JSON::~JSON()
+{
+	if (root)
+		delete root;
+}
+bool JSON::isNull() const
+{
+	if (root)
+		return root->isNull();
+	return false;
+}
+bool JSON::contains(const QString key) const
+{
+	if (root)
+		return root->contains(key);
+	return false;
+}
+const JSON &JSON::operator[](const QString key) const
+{
+	if (root)
+		return root->operator[](key);
+	return Null;
+}
+const JSON &JSON::operator[](int i) const
+{
+	if (root)
+		return root->operator[](i);
+	return Null;
+}
+int JSON::length() const
+{
+	if (root)
+		return root->length();
+	return 0;
+}
+const QString JSON::toString() const
+{
+	if (root)
+		return root->toString();
+	return NULL;
+}
+double JSON::toNumber() const
+{
+	if (root)
+		return root->toNumber();
+	return 0.0;
+}
+bool JSON::toBoolean() const
+{
+	if (root)
+		return root->toBoolean();
+	return false;
 }
