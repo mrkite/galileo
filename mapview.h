@@ -1,3 +1,4 @@
+/*
 Copyright (c) 2013, Sean Kasun
 All rights reserved.
 
@@ -21,3 +22,42 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#ifndef __MAPVIEW_H__
+#define __MAPVIEW_H__
+
+#include <QtWidgets/QWidget>
+
+class MapView : public QWidget
+{
+	Q_OBJECT
+public:
+	MapView(QWidget *parent=0);
+	QSize minimumSizeHint() const;
+	QSize sizeHint() const;
+
+	void setLocation(double x,double y);
+
+public slots:
+	void redraw();
+
+signals:
+	void hoverTextChanged(QString text);
+
+protected:
+	void mousePressEvent(QMouseEvent *event);
+	void mouseMoveEvent(QMouseEvent *event);
+	void mouseReleaseEvent(QMouseEvent *);
+	void wheelEvent(QWheelEvent *event);
+	void keyPressEvent(QKeyEvent *event);
+	void resizeEvent(QResizeEvent *);
+	void paintEvent(QPaintEvent *);
+
+private:
+	void getToolTip(int x,int y);
+	QImage image;
+	double x,y,zoom;
+};
+
+#endif

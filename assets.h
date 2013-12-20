@@ -1,3 +1,4 @@
+/*
 Copyright (c) 2013, Sean Kasun
 All rights reserved.
 
@@ -21,3 +22,29 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#ifndef __ASSETS_H__
+#define __ASSETS_H__
+
+#include <QHash>
+
+class QDir;
+class Material;
+class Mod;
+
+class Assets {
+public:
+	~Assets();
+	static bool verify(const QString &path);
+	void load(const QString &path);
+private:
+
+	void parseMaterial(QDir &dir,QString fn);
+	void parseMod(QDir &dir,QString fn);
+
+	QHash<int,Material *> materials;
+	QHash<int,Mod *> mods;
+};
+
+#endif

@@ -1,3 +1,4 @@
+/*
 Copyright (c) 2013, Sean Kasun
 All rights reserved.
 
@@ -21,3 +22,44 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#ifndef __GALILEO_H__
+#define __GALILEO_H__
+
+#include <QtWidgets/QMainWindow>
+#include "assets.h"
+
+class QAction;
+class QMenu;
+class MapView;
+class Steam;
+
+class Galileo : public QMainWindow
+{
+	Q_OBJECT
+public:
+	Galileo(QString sbpath);
+private slots:
+	void jumpToSpawn();
+	void about();
+signals:
+	void worldLoaded(bool isLoaded);
+private:
+	void createActions();
+	void createMenus();
+	void createStatusBar();
+	void verifyPath();
+
+	QMenu *fileMenu,*planetMenu,*playerMenu,*viewMenu,*helpMenu;
+	QList<QMenu *> playerMenus;
+	QAction *exitAct,*jumpSpawnAct,*aboutAct;
+	QList<QAction *>planetActs;
+	QList<QList<QAction *> >playerActs;
+
+	MapView *mapview;
+	Assets assets;
+	QString sbpath;
+};
+
+#endif

@@ -1,3 +1,4 @@
+/*
 Copyright (c) 2013, Sean Kasun
 All rights reserved.
 
@@ -21,3 +22,39 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+#include <QtWidgets/QApplication>
+#include <QTranslator>
+#include <QLocale>
+#include <QDebug>
+
+#include "galileo.h"
+#include "steam.h"
+
+int main(int argc,char *argv[])
+{
+	QApplication app(argc,argv);
+
+	QString locale = QLocale::system().name();
+
+	QTranslator translator;
+	translator.load(QString("galileo_")+locale);
+	app.installTranslator(&translator);
+
+	app.setApplicationName("Galileo");
+	app.setApplicationVersion("0.1");
+	app.setOrganizationName("seancode");
+
+	QString path=Steam::installDir("211820");
+	if (path.isNull() || !Assets::verify(path))
+	{
+		//prompt for valid path
+		qDebug()<<"couldn't find starbound";
+		app.exit();
+		return 0;
+	}
+
+	Galileo galileo(path);
+	galileo.show();
+	return app.exec();
+}
