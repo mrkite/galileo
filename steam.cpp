@@ -43,7 +43,7 @@ private:
 	QString value;
 };
 
-QString Steam::installDir(const char *gamenum)
+const QString Steam::installDir(const char *gamenum)
 {
 	//find config.vdf
 	QString path=QStandardPaths::locate(QStandardPaths::GenericDataLocation,"Steam",QStandardPaths::LocateDirectory);

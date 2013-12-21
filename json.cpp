@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <QFile>
+#include <QList>
+#include <QHash>
 #include "json.h"
 
 enum Token {
@@ -38,7 +40,9 @@ enum Token {
 	TokenObjectClose,
 	TokenArrayClose,
 	TokenKeySeparator,
-	TokenValueSeparator
+	TokenValueSeparator,
+	TokenEOF,
+	TokenInvalid
 };
 
 class JSONHelper
@@ -55,7 +59,7 @@ public:
 	Token nextToken()
 	{
 		while (pos<len && data.at(pos).isSpace()) pos++;
-		if (pos==len) throw JSONParseException("Unexpected EOF",location());
+		if (pos==len) return TokenEOF;
 		QChar c=data.at(pos++);
 		if (c.isLetter()) //keyword like NULL, TRUE, or FALSE
 		{
@@ -69,7 +73,7 @@ public:
 				return TokenTRUE;
 			if (ref.compare("false",Qt::CaseInsensitive)==0)
 				return TokenFALSE;
-			throw JSONParseException("Unquoted string",location());
+			return TokenInvalid;
 		}
 		if (c.isDigit() || c=='-') //double or hex
 		{
@@ -85,7 +89,7 @@ public:
 		case ']': return TokenArrayClose;
 		case ':': return TokenKeySeparator;
 		case ',': return TokenValueSeparator;
-		default: throw JSONParseException(QString("Unexpected character: %1").arg(c),location());
+		default: return TokenInvalid;
 		}
 	}
 	QString readString()
@@ -95,7 +99,7 @@ public:
 		{
 			if (data.at(pos)=='\\')
 			{
-				pos++; if (pos==len) throw JSONParseException("Unexpected EOF",location());
+				pos++; if (pos==len) return r;
 				switch (data.at(pos++).unicode())
 				{
 				case '"': r+='"'; break;
@@ -112,7 +116,7 @@ public:
 							  for (int i=0;i<4;i++)
 							  {
 								  if (pos==len)
-									  throw JSONParseException("Unexpected EOF",location());
+									  return r;
 								  num<<=4;
 								  char c=data.at(pos++).unicode();
 								  if (c>='0' && c<='9')
@@ -122,13 +126,12 @@ public:
 								  else if (c>='A' && c<='F')
 									  num|=c-'A'+10;
 								  else
-									  throw JSONParseException("Invalid hex code",location());
+									  return r;
 							  }
 							  r+=QChar(num);
 						  }
 						  break;
-				default:
-						  throw JSONParseException("Unknown escape sequence",location());
+				default: return r;
 				}
 			}
 			else
@@ -153,7 +156,7 @@ public:
 			value*=10.0;
 			value+=data.at(pos++).unicode()-'0';
 		}
-		if (pos==len) throw JSONParseException("Unexpected EOF",location());
+		if (pos==len) return sign*value;
 		if (data.at(pos)=='.')
 		{
 			double pow10=10.0;
@@ -164,13 +167,13 @@ public:
 				pow10*=10.0;
 			}
 		}
-		if (pos==len) throw JSONParseException("Unexpected EOF",location());
+		if (pos==len) return sign*value;
 		double scale=1.0;
 		bool frac=false;
 		if (data.at(pos)=='e' || data.at(pos)=='E')
 		{
 			pos++;
-			if (pos==len) throw JSONParseException("Unexpected EOF",location());
+			if (pos==len) return sign*value;
 			if (data.at(pos)=='-')
 			{
 				frac=true;
@@ -190,24 +193,6 @@ public:
 			while (expon>0) { scale *= 10.0; expon--; }
 		}
 		return sign*(frac?(value/scale):(value*scale));
-	}
-	QString location()
-	{
-		int line=1;
-		int col=0;
-		int cpos=pos;
-		bool doneCol=false;
-		while (cpos>=0)
-		{
-			if (data.at(cpos)=='\n')
-			{
-				doneCol=true;
-				line++;
-			}
-			if (!doneCol) col++;
-			cpos--;
-		}
-		return QString("Line: %1, Offset: %2").arg(line).arg(col);
 	}
 private:
 	int pos,len;
@@ -241,7 +226,7 @@ private:
 };
 class JSONObject : public JSON {
 public:
-	JSONObject(JSONHelper &reader);
+	bool load(JSONHelper &reader);
 	virtual ~JSONObject();
 	virtual bool contains(const QString key) const;
 	virtual const JSON &operator[](const QString key) const;
@@ -250,7 +235,7 @@ private:
 };
 class JSONArray : public JSON {
 public:
-	JSONArray(JSONHelper &reader);
+	bool load(JSONHelper &reader);
 	virtual ~JSONArray();
 	virtual int length() const;
 	virtual const JSON &operator[](int index) const;
@@ -269,34 +254,56 @@ static JSON *parse(JSONHelper &reader)
 		case TokenFALSE: return new JSONBool(false);
 		case TokenString: return new JSONString(reader.readString());
 		case TokenNumber: return new JSONNumber(reader.readDouble());
-		case TokenObject: return new JSONObject(reader);
-		case TokenArray: return new JSONArray(reader);
-		default: throw JSONParseException("Expected value",reader.location());
+		case TokenObject:
+			{
+				JSONObject *o=new JSONObject();
+				if (!o->load(reader))
+				{
+					delete o;
+					o=NULL;
+				}
+				return o;
+			}
+		case TokenArray:
+			{
+				JSONArray *a=new JSONArray();
+				if (!a->load(reader))
+				{
+					delete a;
+					a=NULL;
+				}
+				return a;
+			}
+		default: return NULL;
 	}
 	return NULL;
 }
 
-JSONObject::JSONObject(JSONHelper &reader)
+bool JSONObject::load(JSONHelper &reader)
 {
 	while (true)
 	{
 		Token token=reader.nextToken();
 		if (token==TokenObjectClose)
 			break;
-		if (token!=TokenString)
-			throw JSONParseException("Expected quoted string",reader.location());
+		if (token!=TokenString) //error: object doesn't start with key
+			return false;
 		QString key=reader.readString();
-		if (key.length()==0)
-			throw JSONParseException("Empty key",reader.location());
-		if (reader.nextToken()!=TokenKeySeparator)
-			throw JSONParseException("Expected ':'",reader.location());
-		children.insert(key,parse(reader));
+		if (key.length()==0) //error: empty key
+			return false;
+		if (reader.nextToken()!=TokenKeySeparator) //error: no colon after key
+			return false;
+		JSON *child=parse(reader);
+		if (!child)  //error: child failed to parse
+			return false;
+		children.insert(key,child);
 		token=reader.nextToken();
 		if (token==TokenObjectClose)
 			break;
-		if (token!=TokenValueSeparator)
-			throw JSONParseException("Expected ',' or '}'",reader.location());
+		if (token!=TokenValueSeparator) //error: no comma
+			return false;
 	}
+	return true;
 }
 JSONObject::~JSONObject()
 {
@@ -318,23 +325,27 @@ const JSON &JSONObject::operator[](const QString key) const
 	return Null;
 }
 
-JSONArray::JSONArray(JSONHelper &reader)
+bool JSONArray::load(JSONHelper &reader)
 {
 	Token token=reader.peekToken();
 	if (token==TokenArrayClose)
 	{
 		reader.nextToken();
-		return;
+		return true;
 	}
 	while (true)
 	{
-		children.append(parse(reader));
+		JSON *child=parse(reader);
+		if (!child)	//error: child failed to parse
+			return false;
+		children.append(child);
 		token=reader.nextToken();
 		if (token==TokenArrayClose)
 			break;
-		if (token!=TokenValueSeparator)
-			throw JSONParseException("Expected ',' or ']'",reader.location());
+		if (token!=TokenValueSeparator) //error: no comma
+			return false;
 	}
+	return true;
 }
 JSONArray::~JSONArray()
 {
@@ -354,15 +365,6 @@ const JSON &JSONArray::operator[](int index) const
 }
 
 
-JSON::JSON(const QString filename)
-{
-	root=NULL;
-	QFile f(filename);
-	f.open(QIODevice::ReadOnly);
-	JSONHelper reader(f.readAll());
-	f.close();
-	root=parse(reader);
-}
 JSON::JSON()
 {
 	root=NULL;
@@ -371,6 +373,16 @@ JSON::~JSON()
 {
 	if (root)
 		delete root;
+}
+bool JSON::open(const QString filename)
+{
+	QFile f(filename);
+	f.open(QIODevice::ReadOnly);
+	JSONHelper reader(f.readAll());
+	f.close();
+
+	root=parse(reader);
+	return root!=NULL;
 }
 bool JSON::isNull() const
 {

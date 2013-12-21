@@ -24,30 +24,22 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLAYERS_H__
-#define __PLAYERS_H__
+#ifndef __SBSF_H__
+#define __SBSF_H__
 
-#include "sbv.h"
-#include <QList>
 #include <QString>
-class QDir;
 
-class Player : SBV {
+class SBSF
+{
 public:
-	Player() : SBV("SBPFV1.1") {}
-	bool open(const QString fn);
-	QString uuid;
-	QString name;
-	QString ship,home,current;
-};
-
-class Players {
-public:
-	~Players();
-	void load(const QString &path);
-	QListIterator<Player *>iterator();
+	bool open(const QString filename);
+protected:
+	QByteArray header();
+	QByteArray block(quint32 id);
+	quint32 blockSize;
 private:
-	QList<Player *> players;
+	QByteArray data;
+	quint32 headerSize,numBlocks;
 };
 
 #endif

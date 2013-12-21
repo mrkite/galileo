@@ -70,3 +70,7 @@ void Planets::load(const QString &path)
 			planets.append(it.filePath());
 	}
 }
+QListIterator<QString> Planets::iterator()
+{
+	return planets;
+}

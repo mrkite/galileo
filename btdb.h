@@ -24,30 +24,29 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLAYERS_H__
-#define __PLAYERS_H__
+#ifndef __BTDB_H__
+#define __BTDB_H__
 
-#include "sbv.h"
-#include <QList>
-#include <QString>
-class QDir;
+#include "sbsf.h"
+#include <QHash>
 
-class Player : SBV {
+class BTDB : SBSF
+{
 public:
-	Player() : SBV("SBPFV1.1") {}
-	bool open(const QString fn);
-	QString uuid;
-	QString name;
-	QString ship,home,current;
-};
+	BTDB(const char *magic) : magic(magic) {}
+	bool open(const QString filename);
+	const QByteArray get(const QByteArray key);
 
-class Players {
-public:
-	~Players();
-	void load(const QString &path);
-	QListIterator<Player *>iterator();
 private:
-	QList<Player *> players;
+	const QByteArray findLeaf(quint32 blockid,const QByteArray key);
+	const QByteArray findIndex(quint32 blockid,const QByteArray key);
+
+	const char *magic;
+	qint32 root;
+	bool rootLeaf;
+	quint32 keySize;
+
+	QHash<QByteArray,QByteArray> cache;
 };
 
 #endif

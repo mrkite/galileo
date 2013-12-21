@@ -29,20 +29,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QString>
 
-class SBVParseException
-{
-public:
-	SBVParseException(QString reason) : reason(reason) {}
-	QString reason;
-};
-
 class SBV
 {
 public:
-	SBV(const char *magic,const QString filename);
+	SBV(const char *magic) : magic(magic) {}
+	bool open(const QString filename);
 protected:
 	QByteArray data;
 	quint32 version;
+private:
+	const char *magic;
 };
 
 #endif

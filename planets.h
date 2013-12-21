@@ -34,6 +34,7 @@ class BitReader;
 class Planets {
 public:
 	void load(const QString &path);
+	QListIterator<QString> iterator();
 private:
 	QList<QString> planets;
 };

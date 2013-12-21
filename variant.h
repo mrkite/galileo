@@ -24,30 +24,30 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLAYERS_H__
-#define __PLAYERS_H__
+#ifndef __VARIANT_H__
+#define __VARIANT_H__
 
-#include "sbv.h"
-#include <QList>
 #include <QString>
-class QDir;
 
-class Player : SBV {
-public:
-	Player() : SBV("SBPFV1.1") {}
-	bool open(const QString fn);
-	QString uuid;
-	QString name;
-	QString ship,home,current;
-};
+class BitReader;
 
-class Players {
+class Variant
+{
 public:
-	~Players();
-	void load(const QString &path);
-	QListIterator<Player *>iterator();
+	Variant();
+	bool load(BitReader &bits);
+	virtual ~Variant();
+	virtual bool isNull() const;
+	virtual bool contains(const QString key) const;
+	virtual const Variant &operator[](const QString key) const;
+	virtual const Variant &operator[](int index) const;
+	virtual int length() const;
+	virtual const QString toString() const;
+	virtual double toDouble() const;
+	virtual quint32 toInt() const;
+	virtual bool toBoolean() const;
 private:
-	QList<Player *> players;
+	Variant *root;
 };
 
 #endif

@@ -41,9 +41,9 @@ public:
 	float rf();
 	double rd();
 	quint32 rv();
-	QString rs();
+	const QString rs();
 	void skip(size_t len);
-	QByteArray read(size_t len);
+	const QByteArray read(size_t len);
 private:
 	const quint8 *data;
 	const quint8 *ptr;

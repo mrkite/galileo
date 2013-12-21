@@ -33,8 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class Material {
 public:
-	Material(const QDir &dir,const QString path);
+	Material() : pixmap(NULL),stairs(NULL) {}
 	~Material();
+	bool load(const QDir &dir,const QString path);
 	int id;
 	QString description;
 	bool platform,multicolored;
@@ -43,8 +44,9 @@ public:
 };
 class Mod {
 public:
-	Mod(const QDir &dir,const QString path);
+	Mod() : pixmap(NULL) {}
 	~Mod();
+	bool load(const QDir &dir,const QString path);
 	int id;
 	QString description;
 	int variants; 
@@ -86,8 +88,11 @@ void Assets::load(const QString &path)
 			it.next();
 			if (it.fileInfo().suffix()=="material")
 			{
-				Material *m=new Material(assets,it.filePath());
-				materials[m->id]=m;
+				Material *m=new Material();
+				if (m->load(assets,it.filePath()))
+					materials[m->id]=m;
+				else
+					delete m;
 			}
 		}
 		assets.cdUp();
@@ -100,8 +105,11 @@ void Assets::load(const QString &path)
 			it.next();
 			if (it.fileInfo().suffix()=="material")
 			{
-				Material *m=new Material(assets,it.filePath());
-				materials[m->id]=m;
+				Material *m=new Material();
+				if (m->load(assets,it.filePath()))
+					materials[m->id]=m;
+				else
+					delete m;
 			}
 		}
 		assets.cdUp();
@@ -114,17 +122,28 @@ void Assets::load(const QString &path)
 			it.next();
 			if (it.fileInfo().suffix()=="matmod")
 			{
-				Mod *m=new Mod(assets,it.filePath());
-				mods[m->id]=m;
+				Mod *m=new Mod();
+				if (m->load(assets,it.filePath()))
+					mods[m->id]=m;
+				else
+					delete m;
 			}
 		}
 		assets.cdUp();
 	}
 }
 
-Material::Material(const QDir &dir,const QString path)
+Material::~Material()
 {
-	JSON json(path);
+	delete pixmap;
+	if (stairs)
+		delete stairs;
+}
+bool Material::load(const QDir &dir,const QString path)
+{
+	JSON json;
+	if (!json.open(path)) //failed to parse material
+		return false;
 	id=json["materialId"].toNumber();
 	description=json["shortdescription"].toString();
 	multicolored=json["multicolored"].toBoolean();
@@ -142,22 +161,20 @@ Material::Material(const QDir &dir,const QString path)
 		variants=json["variants"].toNumber();
 		stairs=NULL;
 	}
-}
-Material::~Material()
-{
-	delete pixmap;
-	if (stairs)
-		delete stairs;
-}
-Mod::Mod(const QDir &dir,const QString path)
-{
-	JSON json(path);
-	id=json["modId"].toNumber();
-	description=json["Description"].toString();
-	variants=json["variants"].toNumber();
-	pixmap=new QPixmap(dir.filePath(json["frames"].toString()));
+	return true;
 }
 Mod::~Mod()
 {
 	delete pixmap;
+}
+bool Mod::load(const QDir &dir,const QString path)
+{
+	JSON json;
+	if (!json.open(path))
+		return false;
+	id=json["modId"].toNumber();
+	description=json["Description"].toString();
+	variants=json["variants"].toNumber();
+	pixmap=new QPixmap(dir.filePath(json["frames"].toString()));
+	return true;
 }

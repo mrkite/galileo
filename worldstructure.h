@@ -24,30 +24,41 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLAYERS_H__
-#define __PLAYERS_H__
+#ifndef __WORLDSTRUCTURE_H__
+#define __WORLDSTRUCTURE_H__
 
-#include "sbv.h"
-#include <QList>
+#include "variant.h"
 #include <QString>
-class QDir;
+#include <QList>
+class BitReader;
 
-class Player : SBV {
+class WorldStructure
+{
 public:
-	Player() : SBV("SBPFV1.1") {}
-	bool open(const QString fn);
-	QString uuid;
-	QString name;
-	QString ship,home,current;
-};
-
-class Players {
-public:
-	~Players();
-	void load(const QString &path);
-	QListIterator<Player *>iterator();
+	bool load(BitReader &bits);
+	struct Overlay
+	{
+		float x,y;
+		QString image;
+	};
+	struct Object
+	{
+		quint32 x,y;
+		QString name;
+		quint8 unknown;
+		Variant parameters;
+	};
+	struct Block
+	{
+		quint32 x,y;
+		Variant material;
+	};
 private:
-	QList<Player *> players;
+	QList<Overlay> backgroundOverlays;
+	QList<Overlay> foregroundOverlays;
+	QList<Object> objects;
+	QList<Block> backgroundBlocks;
+	QList<Block> foregroundBlocks;
 };
 
 #endif

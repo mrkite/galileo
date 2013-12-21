@@ -27,22 +27,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __JSON_H__
 #define __JSON_H__
 
-#include <QHash>
-#include <QList>
 #include <QString>
-
-class JSONParseException
-{
-public:
-	JSONParseException(QString reason,QString at) : reason(QString("%1 at %2").arg(reason).arg(at)) {}
-	QString reason;
-};
 
 class JSON
 {
 public:
 	JSON();
-	JSON(const QString filename);
+	bool open(const QString filename);
 	virtual ~JSON();
 	virtual bool isNull() const;
 	virtual bool contains(const QString key) const;

@@ -34,9 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QMessageBox>
+#include <QFileInfo>
 #include <QDebug>
 
-Galileo::Galileo(QString sbpath) : sbpath(sbpath)
+Galileo::Galileo(const QString sbpath)
 {
 	mapview = new MapView;
 	connect(mapview,SIGNAL(hoverTextChanged(QString)),
@@ -57,6 +58,8 @@ Galileo::Galileo(QString sbpath) : sbpath(sbpath)
 
 	assets.load(sbpath);
 	players.load(sbpath);
+	planets.load(sbpath);
+	populateSubMenus();
 }
 
 void Galileo::createActions()
@@ -98,6 +101,47 @@ void Galileo::createMenus()
 	helpMenu=menuBar()->addMenu(tr("&Help"));
 	helpMenu->addAction(aboutAct);
 }
+void Galileo::populateSubMenus()
+{
+	bool hasPlayers=false;
+	QListIterator<Player *>i=players.iterator();
+	while (i.hasNext())
+	{
+		hasPlayers=true;
+		Player *p=i.next();
+		QMenu *menu=playerMenu->addMenu(p->name);
+		QList<QAction *> acts;
+		acts.append(createPlanetItem(QString("%1's Ship").arg(p->name),p->ship));
+		if (!p->home.isNull())
+			acts.append(createPlanetItem("Home Planet",p->home));
+		acts.append(createPlanetItem("Orbiting Planet",p->current));
+		menu->addActions(acts);
+		playerMenus.append(menu);
+	}
+	playerMenu->setEnabled(hasPlayers);
+
+	bool hasPlanets=false;
+	QListIterator<QString>w=planets.iterator();
+	QList<QAction *> acts;
+	while (w.hasNext())
+	{
+		hasPlanets=true;
+		QString p=w.next();
+		QFileInfo fi(p);
+		acts.append(createPlanetItem(fi.baseName(),p));
+	}
+	planetMenu->addActions(acts);
+	planetMenu->setEnabled(hasPlanets);
+}
+QAction *Galileo::createPlanetItem(const QString name,const QString data)
+{
+	QAction *act=new QAction(this);
+	act->setText(name);
+	act->setData(data);
+	connect(act, SIGNAL(triggered()),
+			this, SLOT(openPlanet()));
+	return act;
+}
 void Galileo::createStatusBar()
 {
 	statusBar()->showMessage(tr("Ready"));
@@ -117,4 +161,14 @@ void Galileo::about()
 					   .arg(qApp->applicationVersion())
 					   .arg(2013)
 					   .arg(qApp->organizationName()));
+}
+
+void Galileo::openPlanet()
+{
+	QAction *action=qobject_cast<QAction*>(sender());
+	if (action)
+	{
+		QString path=action->data().toString();
+		qDebug()<<path;
+	}
 }

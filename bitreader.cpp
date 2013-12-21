@@ -94,7 +94,7 @@ double BitReader::rd()
 	df.d=r64();
 	return df.d;
 }
-QString BitReader::rs()
+const QString BitReader::rs()
 {
 	quint32 len=rv();
 	QByteArray r((const char *)ptr,len);
@@ -105,7 +105,7 @@ void BitReader::skip(size_t len)
 {
 	ptr+=len;
 }
-QByteArray BitReader::read(size_t len)
+const QByteArray BitReader::read(size_t len)
 {
 	QByteArray r((const char *)ptr,len);
 	ptr+=len;

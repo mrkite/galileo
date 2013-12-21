@@ -32,7 +32,7 @@ class QString;
 class Steam
 {
 public:
-	static QString installDir(const char *gamenum);
+	static const QString installDir(const char *gamenum);
 };
 
 #endif

@@ -24,30 +24,35 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLAYERS_H__
-#define __PLAYERS_H__
+#include "sbsf.h"
+#include "bitreader.h"
+#include <QFile>
 
-#include "sbv.h"
-#include <QList>
-#include <QString>
-class QDir;
+bool SBSF::open(const QString filename)
+{
+	QFile f(filename);
+	f.open(QIODevice::ReadOnly);
+	data=f.readAll();
+	f.close();
 
-class Player : SBV {
-public:
-	Player() : SBV("SBPFV1.1") {}
-	bool open(const QString fn);
-	QString uuid;
-	QString name;
-	QString ship,home,current;
-};
+	if (!data.startsWith("SBSF"))
+		return false;
 
-class Players {
-public:
-	~Players();
-	void load(const QString &path);
-	QListIterator<Player *>iterator();
-private:
-	QList<Player *> players;
-};
+	BitReader bits(data.constData(),data.size());
+	bits.skip(4);
+	headerSize=bits.r32();
+	blockSize=bits.r32();
+	numBlocks=(data.size()-headerSize)/blockSize;
+	return true;
+}
 
-#endif
+QByteArray SBSF::header()
+{
+	return data.mid(0x20,headerSize-0x20);
+}
+QByteArray SBSF::block(quint32 id)
+{
+	if (id>=numBlocks)
+		return NULL;
+	return data.mid(headerSize+id*blockSize,blockSize);
+}

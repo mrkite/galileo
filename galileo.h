@@ -41,10 +41,11 @@ class Galileo : public QMainWindow
 {
 	Q_OBJECT
 public:
-	Galileo(QString sbpath);
+	Galileo(const QString sbpath);
 private slots:
 	void jumpToSpawn();
 	void about();
+	void openPlanet();
 signals:
 	void worldLoaded(bool isLoaded);
 private:
@@ -52,18 +53,17 @@ private:
 	void createMenus();
 	void createStatusBar();
 	void verifyPath();
+	void populateSubMenus();
+	QAction *createPlanetItem(const QString name,const QString data); 
 
 	QMenu *fileMenu,*planetMenu,*playerMenu,*viewMenu,*helpMenu;
 	QList<QMenu *> playerMenus;
 	QAction *exitAct,*jumpSpawnAct,*aboutAct;
-	QList<QAction *>planetActs;
-	QList<QList<QAction *> >playerActs;
 
 	MapView *mapview;
 	Assets assets;
 	Players players;
 	Planets planets;
-	QString sbpath;
 };
 
 #endif

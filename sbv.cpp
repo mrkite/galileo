@@ -28,17 +28,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bitreader.h"
 #include <QFile>
 
-SBV::SBV(const char *magic,const QString filename)
+bool SBV::open(const QString filename)
 {
 	QFile f(filename);
 	f.open(QIODevice::ReadOnly);
 	QByteArray fdata=f.readAll();
 	f.close();
+
 	if (!fdata.startsWith(magic))
-		throw new SBVParseException(QString("Not a %1 file").arg(magic));
+		return false;
+
 	BitReader bits(fdata.constData(),fdata.size());
 	bits.skip(strlen(magic));
 	version=bits.r32();
 	size_t len=bits.rv();
 	data=bits.read(len);
+	return true;
 }

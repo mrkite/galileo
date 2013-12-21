@@ -24,30 +24,63 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __PLAYERS_H__
-#define __PLAYERS_H__
+#include "worldstructure.h"
+#include "bitreader.h"
 
-#include "sbv.h"
-#include <QList>
-#include <QString>
-class QDir;
+bool WorldStructure::load(BitReader &bits)
+{
+	bits.rv(); //length
 
-class Player : SBV {
-public:
-	Player() : SBV("SBPFV1.1") {}
-	bool open(const QString fn);
-	QString uuid;
-	QString name;
-	QString ship,home,current;
-};
-
-class Players {
-public:
-	~Players();
-	void load(const QString &path);
-	QListIterator<Player *>iterator();
-private:
-	QList<Player *> players;
-};
-
-#endif
+	quint32 num=bits.rv();
+	for (quint32 i=0;i<num;i++)
+	{
+		Overlay overlay;
+		overlay.x=bits.rf();
+		overlay.y=bits.rf();
+		overlay.image=bits.rs();
+		backgroundOverlays.append(overlay);
+	}
+	num=bits.rv();
+	for (quint32 i=0;i<num;i++)
+	{
+		Overlay overlay;
+		overlay.x=bits.rf();
+		overlay.y=bits.rf();
+		overlay.image=bits.rs();
+		foregroundOverlays.append(overlay);
+	}
+	num=bits.rv();
+	for (quint32 i=0;i<num;i++)
+	{
+		Object object;
+		object.x=bits.r32();
+		object.y=bits.r32();
+		object.name=bits.rs();
+		object.unknown=bits.r8();
+		if (!object.parameters.load(bits))
+			return false;
+		objects.append(object);
+	}
+	num=bits.rv();
+	for (quint32 i=0;i<num;i++)
+	{
+		Block block;
+		block.x=bits.r32();
+		block.y=bits.r32();
+		if (!block.material.load(bits))
+			return false;
+		backgroundBlocks.append(block);
+	}
+	num=bits.rv();
+	for (quint32 i=0;i<num;i++)
+	{
+		Block block;
+		block.x=bits.r32();
+		block.y=bits.r32();
+		if (!block.material.load(bits))
+			return false;
+		foregroundBlocks.append(block);
+	}
+	//don't bother with the locations
+	return true;
+}

@@ -34,7 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class ClientContext : SBV
 {
 public:
-	ClientContext(const QString fn);
+	ClientContext() : SBV("SBCCV1") {}
+	bool open(const QString fn);
 	QString home,current;
 };
 
@@ -85,9 +86,14 @@ void Players::load(const QString &path)
 		it.next();
 		if (it.fileInfo().suffix()=="player")
 		{
-			Player *p=new Player(it.filePath());
-			p->ship=dir.filePath(p->uuid+".shipword");
-			players.append(p);
+			Player *p=new Player();
+			if (p->open(it.filePath()))
+			{
+				p->ship=dir.filePath(p->uuid+".shipword");
+				players.append(p);
+			}
+			else
+				delete p;
 		}
 	}
 	//now loop through all the client contexts
@@ -98,15 +104,25 @@ void Players::load(const QString &path)
 		while (i.hasNext())
 		{
 			Player *p=i.next();
-			ClientContext cc(dir.filePath(p->uuid+".clientcontext"));
-			p->home=cc.home;
-			p->current=cc.current;
+			ClientContext cc;
+			if (cc.open(dir.filePath(p->uuid+".clientcontext")))
+			{
+				p->home=dir.filePath(cc.home);
+				p->current=dir.filePath(cc.current);
+			}
 		}
 	}
 }
-
-Player::Player(const QString fn) : SBV("SBPFV1.1",fn)
+QListIterator<Player *> Players::iterator()
 {
+	return players;
+}
+
+bool Player::open(const QString fn)
+{
+	if (!SBV::open(fn))
+		return false;
+
 	BitReader bits(data.constData(),data.size());
 	bool hasUUID=bits.rb();
 	if (hasUUID)
@@ -116,10 +132,14 @@ Player::Player(const QString fn) : SBV("SBPFV1.1",fn)
 	}
 	name=bits.rs();
 	//we don't care about the rest of the identity
+	return true;
 }
 
-ClientContext::ClientContext(const QString fn) : SBV("SBCCV1",fn)
+bool ClientContext::open(const QString fn)
 {
+	if (!SBV::open(fn))
+		return false;
+
 	BitReader bits(data.constData(),data.size());
 	bits.rb(); //isAdmin
 	bits.rv(); //teamType
@@ -152,4 +172,5 @@ ClientContext::ClientContext(const QString fn) : SBV("SBCCV1",fn)
 	current=c.filename;
 	WorldCoordinate h(bits);
 	home=h.filename;
+	return true;
 }
