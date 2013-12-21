@@ -41,7 +41,8 @@ class Galileo : public QMainWindow
 {
 	Q_OBJECT
 public:
-	Galileo(const QString sbpath);
+	Galileo();
+	void load(const QString sbpath);
 private slots:
 	void jumpToSpawn();
 	void about();
@@ -53,6 +54,7 @@ private:
 	void createMenus();
 	void createStatusBar();
 	void verifyPath();
+	void loadAssets(const QString sbpath);
 	void populateSubMenus();
 	QAction *createPlanetItem(const QString name,const QString data); 
 

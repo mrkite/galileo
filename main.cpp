@@ -54,7 +54,8 @@ int main(int argc,char *argv[])
 		return 0;
 	}
 
-	Galileo galileo(path);
+	Galileo galileo;
 	galileo.show();
+	galileo.load(path);
 	return app.exec();
 }

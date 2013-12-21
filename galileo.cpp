@@ -34,10 +34,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QProgressDialog>
+#include <QtConcurrent/QtConcurrent>
+#include <QFutureWatcher>
 #include <QFileInfo>
 #include <QDebug>
 
-Galileo::Galileo(const QString sbpath)
+Galileo::Galileo()
 {
 	mapview = new MapView;
 	connect(mapview,SIGNAL(hoverTextChanged(QString)),
@@ -56,10 +59,6 @@ Galileo::Galileo(const QString sbpath)
 
 	emit worldLoaded(false);
 
-	assets.load(sbpath);
-	players.load(sbpath);
-	planets.load(sbpath);
-	populateSubMenus();
 }
 
 void Galileo::createActions()
@@ -161,6 +160,25 @@ void Galileo::about()
 					   .arg(qApp->applicationVersion())
 					   .arg(2013)
 					   .arg(qApp->organizationName()));
+}
+void Galileo::load(const QString sbpath)
+{
+	QProgressDialog progress("Loading assets...",NULL,0,0,this);
+	progress.setWindowModality(Qt::WindowModal);
+
+	QFutureWatcher<void> watcher;
+	connect(&watcher, SIGNAL(finished()), &progress, SLOT(reset()));
+	QFuture<void> future=QtConcurrent::run(this,&Galileo::loadAssets,sbpath);
+	watcher.setFuture(future);
+	progress.exec();
+	watcher.waitForFinished();
+	populateSubMenus();
+}
+void Galileo::loadAssets(const QString sbpath)
+{
+	assets.load(sbpath);
+	players.load(sbpath);
+	planets.load(sbpath);
 }
 
 void Galileo::openPlanet()
