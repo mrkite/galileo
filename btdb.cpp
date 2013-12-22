@@ -55,14 +55,9 @@ class Leaf
 
 const QByteArray BTDB::get(const QByteArray key)
 {
-	if (!cache.contains(key))
-	{
-		if (rootLeaf)
-			cache[key]=findLeaf(root,key);
-		else
-			cache[key]=findIndex(root,key);
-	}
-	return cache[key];
+	if (rootLeaf)
+		return findLeaf(root,key);
+	return findIndex(root,key);
 }
 
 const QByteArray BTDB::findLeaf(quint32 blockid,const QByteArray key)

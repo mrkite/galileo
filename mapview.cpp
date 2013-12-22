@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "math.h"
 #include <QPainter>
 #include <QResizeEvent>
+#include "world.h"
 
 static const double MinZoom=1.0;
 static const double MaxZoom=20.0;
@@ -34,11 +35,14 @@ static const double PanSpeed=10.0;
 static const double SPanScale=2.0;
 static const double CPanScale=4.0;
 
-MapView::MapView(QWidget *parent) : QWidget(parent)
+MapView::MapView(Assets &assets, QWidget *parent) : QWidget(parent), renderer(assets)
 {
 	zoom=MinZoom;
+	connect(&cache, SIGNAL(sectorLoaded()),
+			this, SLOT(redraw()));
 	setMouseTracking(true);
 	setFocusPolicy(Qt::StrongFocus);
+	world=NULL;
 }
 
 QSize MapView::minimumSizeHint() const
@@ -50,11 +54,19 @@ QSize MapView::sizeHint() const
 	return QSize(400,400);
 }
 
-void MapView::setLocation(double x,double y)
+void MapView::setWorld(World *world)
 {
-	this->x=x;
-	this->y=y;
-
+	if (this->world)
+		delete this->world;
+	this->world=world;
+	cache.clear();
+	cache.setWorld(world);
+	jumpToSpawn();
+}
+void MapView::jumpToSpawn()
+{
+	this->x=world->meta.spawnX;
+	this->x=world->meta.spawnY;
 	redraw();
 }
 
@@ -173,6 +185,19 @@ void MapView::redraw()
 		return;
 	}
 	// otherwise draw
+
+	uchar *bits=image.bits();
+	int imgstride=image.bytesPerLine();
+
+	quint16 sx,sy;
+	sx=x/32;
+	sy=y/32;
+
+	TileSector *sector=cache.fetch(sx,sy);
+	if (sector)
+		renderer.render(sector,bits,imgstride,image.width(),image.height());
+
+	update();
 }
 
 void MapView::getToolTip(int x, int y)

@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "galileo.h"
 #include "mapview.h"
 #include "steam.h"
+#include "world.h"
 #include <QApplication>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QAction>
@@ -42,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Galileo::Galileo()
 {
-	mapview = new MapView;
+	mapview = new MapView(assets);
 	connect(mapview,SIGNAL(hoverTextChanged(QString)),
 			statusBar(),SLOT(showMessage(QString)));
 	connect(this, SIGNAL(worldLoaded(bool)),
@@ -74,7 +75,7 @@ void Galileo::createActions()
 	jumpSpawnAct->setShortcut(tr("F1"));
 	jumpSpawnAct->setStatusTip(tr("Jump to world spawn"));
 	connect(jumpSpawnAct, SIGNAL(triggered()),
-			this, SLOT(jumpToSpawn()));
+			mapview, SLOT(jumpToSpawn()));
 	connect(this, SIGNAL(worldLoaded(bool)),
 			jumpSpawnAct, SLOT(setEnabled(bool)));
 
@@ -146,12 +147,6 @@ void Galileo::createStatusBar()
 	statusBar()->showMessage(tr("Ready"));
 }
 
-
-void Galileo::jumpToSpawn()
-{
-//	mapview->setLocation(spawnx,spawny);
-}
-
 void Galileo::about()
 {
 	QMessageBox::about(this,tr("About %1").arg(qApp->applicationName()),
@@ -187,6 +182,35 @@ void Galileo::openPlanet()
 	if (action)
 	{
 		QString path=action->data().toString();
-		qDebug()<<path;
+
+		QProgressDialog progress("Opening World...",NULL,0,0,this);
+		progress.setWindowModality(Qt::WindowModal);
+
+		QFutureWatcher<World *> watcher;
+		connect(&watcher, SIGNAL(finished()), &progress, SLOT(reset()));
+		QFuture<World *> future=QtConcurrent::run(this,&Galileo::openPlanet,path);
+		watcher.setFuture(future);
+		progress.exec();
+		watcher.waitForFinished();
+
+		World *world=watcher.result();
+		if (!world)
+			QMessageBox::warning(this,tr("Error opening World"),
+					tr("Failed to read world"));
+		else
+		{
+			emit worldLoaded(true);
+			mapview->setWorld(world);
+		}
 	}
+}
+World *Galileo::openPlanet(const QString path)
+{
+	World *world=new World();
+	if (!world->open(path))
+	{
+		delete world;
+		return NULL;
+	}
+	return world;
 }

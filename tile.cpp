@@ -24,48 +24,21 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "world.h"
-#include "worldmeta.h"
-#include <zlib.h>
+#include "tile.h"
 
-bool World::open(const QString filename)
+void Tile::load(BitReader &bits)
 {
-	if (!BTDB::open(filename))
-		return false;
-
-	QByteArray key(5,0);  //key 0 = meta
-	if (!meta.load(get(key)))
-		return false;
-	return true;
-}
-
-QByteArray World::sector(quint16 x,quint16 y)
-{
-	QByteArray key(5,0);
-	key[0]=1;
-	key[1]=x>>8;
-	key[2]=x&0xff;
-	key[3]=y>>8;
-	key[4]=y&0xff;
-	QByteArray data=get(key);
-	QByteArray sector;
-	static const int CHUNK_SIZE = 0x4000;
-	z_stream strm;
-	strm.zalloc=Z_NULL;
-	strm.zfree=Z_NULL;
-	strm.opaque=Z_NULL;
-	strm.avail_in=data.size();
-	strm.next_in=(Bytef*)data.constData();
-
-	inflateInit(&strm);
-	char out[CHUNK_SIZE];
-	do {
-		strm.avail_out=CHUNK_SIZE;
-		strm.next_out=(Bytef*)out;
-		inflate(&strm,Z_NO_FLUSH);
-		sector.append(out,CHUNK_SIZE-strm.avail_out);
-	} while (strm.avail_out==0);
-	inflateEnd(&strm);
-
-	return sector;
+	foreground=bits.r16();
+	fgHueShift=bits.r8();
+	fgColorVariant=bits.r8();
+	fgMod=bits.r16();
+	fgModHueShift=bits.r8();
+	background=bits.r16();
+	bgHueShift=bits.r8();
+	bgColorVariant=bits.r8();
+	bgMod=bits.r16();
+	bgModHueShift=bits.r8();
+	liquid=bits.r8();
+	liquidPressure=bits.r8();
+	bits.skip(6); //collision, dungeonid,biome,envbiome,root
 }

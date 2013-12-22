@@ -36,6 +36,7 @@ class QAction;
 class QMenu;
 class MapView;
 class Steam;
+class World;
 
 class Galileo : public QMainWindow
 {
@@ -44,7 +45,6 @@ public:
 	Galileo();
 	void load(const QString sbpath);
 private slots:
-	void jumpToSpawn();
 	void about();
 	void openPlanet();
 signals:
@@ -57,6 +57,7 @@ private:
 	void loadAssets(const QString sbpath);
 	void populateSubMenus();
 	QAction *createPlanetItem(const QString name,const QString data); 
+	World *openPlanet(const QString path);
 
 	QMenu *fileMenu,*planetMenu,*playerMenu,*viewMenu,*helpMenu;
 	QList<QMenu *> playerMenus;

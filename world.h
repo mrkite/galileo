@@ -35,9 +35,8 @@ class World : BTDB
 {
 public:
 	World() : BTDB("WRLDBV1.1") {}
-	~World();
 	bool open(const QString filename);
-private:
+	QByteArray sector(quint16 x,quint16 y);
 	WorldMeta meta;
 };
 

@@ -34,7 +34,6 @@ class WorldMeta
 {
 public:
 	bool load(const QByteArray data);
-private:
 	quint32 width,height;
 	float spawnX,spawnY;
 	WorldStructure structure;

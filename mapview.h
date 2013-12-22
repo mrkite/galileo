@@ -27,19 +27,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MAPVIEW_H__
 #define __MAPVIEW_H__
 
+#include "sectorcache.h"
+#include "renderer.h"
 #include <QtWidgets/QWidget>
+
+class World;
+class Assets;
 
 class MapView : public QWidget
 {
 	Q_OBJECT
 public:
-	MapView(QWidget *parent=0);
+	MapView(Assets &assets,QWidget *parent=0);
 	QSize minimumSizeHint() const;
 	QSize sizeHint() const;
 
-	void setLocation(double x,double y);
+	void setWorld(World *world);
 
 public slots:
+	void jumpToSpawn();
 	void redraw();
 
 signals:
@@ -58,6 +64,11 @@ private:
 	void getToolTip(int x,int y);
 	QImage image;
 	double x,y,zoom;
+	World *world;
+
+	Renderer renderer;
+
+	SectorCache cache;
 };
 
 #endif

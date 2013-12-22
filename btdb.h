@@ -45,8 +45,6 @@ private:
 	qint32 root;
 	bool rootLeaf;
 	quint32 keySize;
-
-	QHash<QByteArray,QByteArray> cache;
 };
 
 #endif

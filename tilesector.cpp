@@ -24,48 +24,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "world.h"
-#include "worldmeta.h"
-#include <zlib.h>
+#include "tilesector.h"
 
-bool World::open(const QString filename)
+TileSector::TileSector()
 {
-	if (!BTDB::open(filename))
-		return false;
-
-	QByteArray key(5,0);  //key 0 = meta
-	if (!meta.load(get(key)))
-		return false;
-	return true;
+	loaded=false;
 }
 
-QByteArray World::sector(quint16 x,quint16 y)
+void TileSector::load(const QByteArray data)
 {
-	QByteArray key(5,0);
-	key[0]=1;
-	key[1]=x>>8;
-	key[2]=x&0xff;
-	key[3]=y>>8;
-	key[4]=y&0xff;
-	QByteArray data=get(key);
-	QByteArray sector;
-	static const int CHUNK_SIZE = 0x4000;
-	z_stream strm;
-	strm.zalloc=Z_NULL;
-	strm.zfree=Z_NULL;
-	strm.opaque=Z_NULL;
-	strm.avail_in=data.size();
-	strm.next_in=(Bytef*)data.constData();
-
-	inflateInit(&strm);
-	char out[CHUNK_SIZE];
-	do {
-		strm.avail_out=CHUNK_SIZE;
-		strm.next_out=(Bytef*)out;
-		inflate(&strm,Z_NO_FLUSH);
-		sector.append(out,CHUNK_SIZE-strm.avail_out);
-	} while (strm.avail_out==0);
-	inflateEnd(&strm);
-
-	return sector;
+	BitReader bits(data.constData(),data.size());
+	bits.rv(); //version
+	bits.rv(); //generation level
+	for (int y=0;y<32;y++)
+		for (int x=0;x<32;x++)
+			tiles[y*32+x].load(bits);
+	loaded=true;
 }
