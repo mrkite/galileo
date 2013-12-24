@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "world.h"
 #include "worldmeta.h"
 #include <zlib.h>
+#include <QDebug>
 
 bool World::open(const QString filename)
 {

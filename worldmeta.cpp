@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "worldmeta.h"
 #include "bitreader.h"
+#include <QDebug>
 
 bool WorldMeta::load(const QByteArray data)
 {

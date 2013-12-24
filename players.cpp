@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "worldcoordinate.h"
 #include <QDir>
 #include <QDirIterator>
-#include <QDebug>
 
 class ClientContext : SBV
 {
@@ -89,7 +88,7 @@ void Players::load(const QString &path)
 			Player *p=new Player();
 			if (p->open(it.filePath()))
 			{
-				p->ship=dir.filePath(p->uuid+".shipword");
+				p->ship=dir.filePath(p->uuid+".shipworld");
 				players.append(p);
 			}
 			else
@@ -107,7 +106,8 @@ void Players::load(const QString &path)
 			ClientContext cc;
 			if (cc.open(dir.filePath(p->uuid+".clientcontext")))
 			{
-				p->home=dir.filePath(cc.home);
+				if (!cc.home.isNull())
+					p->home=dir.filePath(cc.home);
 				p->current=dir.filePath(cc.current);
 			}
 		}

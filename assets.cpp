@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "json.h"
 #include <QDir>
 #include <QDirIterator>
-#include <QDebug>
 #include <QPixmap>
 
 class Material {

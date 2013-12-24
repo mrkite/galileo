@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "worldstructure.h"
 #include "bitreader.h"
+#include <QDebug>
 
 bool WorldStructure::load(BitReader &bits)
 {
@@ -67,8 +68,7 @@ bool WorldStructure::load(BitReader &bits)
 		Block block;
 		block.x=bits.r32();
 		block.y=bits.r32();
-		if (!block.material.load(bits))
-			return false;
+		block.material=bits.rv();
 		backgroundBlocks.append(block);
 	}
 	num=bits.rv();
@@ -77,8 +77,7 @@ bool WorldStructure::load(BitReader &bits)
 		Block block;
 		block.x=bits.r32();
 		block.y=bits.r32();
-		if (!block.material.load(bits))
-			return false;
+		block.material=bits.rv();
 		foregroundBlocks.append(block);
 	}
 	//don't bother with the locations

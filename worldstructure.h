@@ -51,7 +51,7 @@ public:
 	struct Block
 	{
 		quint32 x,y;
-		Variant material;
+		qint16 material;
 	};
 private:
 	QList<Overlay> backgroundOverlays;

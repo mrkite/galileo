@@ -37,9 +37,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
-#include <QFutureWatcher>
+#include <QtConcurrent/QFutureWatcher>
 #include <QFileInfo>
-#include <QDebug>
 
 Galileo::Galileo()
 {

@@ -26,7 +26,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer.h"
 #include "tilesector.h"
-#include <QDebug>
 
 void Renderer::render(TileSector *sector,uchar *bits,int imgstride,int width,int height)
 {

@@ -33,15 +33,18 @@ WorldCoordinate::WorldCoordinate(BitReader &bits)
 	coordinate=new Coordinate(bits);
 	planet=bits.r32();
 	moon=bits.r32();
-	filename=QString("%1_%2_%3_%4_%5")
-		.arg(coordinate->sector)
-		.arg(coordinate->x)
-		.arg(coordinate->y)
-		.arg(coordinate->z)
-		.arg(planet);
-	if (moon)
-		filename+=QString("_%1").arg(moon);
-	filename+=".world";
+	if (coordinate->sector!="")
+	{
+		filename=QString("%1_%2_%3_%4_%5")
+			.arg(coordinate->sector)
+			.arg(coordinate->x)
+			.arg(coordinate->y)
+			.arg(coordinate->z)
+			.arg(planet);
+		if (moon)
+			filename+=QString("_%1").arg(moon);
+		filename+=".world";
+	}
 }
 WorldCoordinate::~WorldCoordinate()
 {
